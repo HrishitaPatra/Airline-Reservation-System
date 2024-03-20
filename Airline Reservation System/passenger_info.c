@@ -25,6 +25,7 @@ typedef struct passenger_info {
     char nationality[50];
     int ph_no;
     int emergency_cont;
+    char food[50];
     PASSENG_ADDR p_a;
     CREDIT_CARD c_a;
 } PASSENGER_INFO;
@@ -54,51 +55,69 @@ NOD *insertPassenger(NOD *head, PASSENGER_INFO passenger_data) {
 
 PASSENGER_INFO book_flight() {
     PASSENGER_INFO passenger;
+    int n;
 
-    printf("Enter the name: ");
+    printf("\n\t\t****************************\n");
+
+    printf("\n\t\tDo you want food enter 1 for food else 0: ");
+    scanf("%d",&n);
+    if(n==1)
+    {
+        printf("\n\t\tPlease enter Veg for Vegeterian and Non-Veg for Non-Vegeterian: ");
+        scanf("%s",passenger.food);
+    }
+    else
+    {
+        strcpy(passenger.food, "-");
+    }
+    
+    printf("\n\t\tEnter name: ");
     scanf("%s", passenger.name);
 
-    printf("Enter your gender: ");
+    printf("\n\t\tEnter your gender: ");
     scanf("%s", passenger.gender);
 
-    printf("Enter your email ID: ");
+    printf("\n\t\tEnter your email ID: ");
     scanf("%s", passenger.email_id);
 
-    printf("Enter your nationality: ");
+    printf("\n\t\tEnter your nationality: ");
     scanf("%s", passenger.nationality);
 
-    printf("Enter your phone number: ");
+    printf("\n\t\tEnter your phone number: ");
     scanf("%d", &passenger.ph_no);
 
-    printf("Enter your emergency contact: ");
+    printf("\n\t\tEnter your emergency contact: ");
     scanf("%d", &passenger.emergency_cont);
 
-    printf("Enter your street address: ");
+    printf("\n\t\tEnter your street address: ");
     scanf("%s", passenger.p_a.street);
 
-    printf("Enter your city: ");
+    printf("\n\t\tEnter your city: ");
     scanf("%s", passenger.p_a.city);
 
-    printf("Enter your state or region: ");
+    printf("\n\t\tEnter your state or region: ");
     scanf("%s", passenger.p_a.state);
 
-    printf("Enter your postal code: ");
+    printf("\n\t\tEnter your postal code: ");
     scanf(" %[^\n]", passenger.p_a.postalCode);
 
-    printf("Enter your country: ");
+    printf("\n\t\tEnter your country: ");
     scanf(" %[^\n]", passenger.p_a.country);
 
-    printf("Enter your card number: ");
+    printf("\n\t\tEnter your card number: ");
     scanf("%s", passenger.c_a.cardNumber);
 
-    printf("Enter your card holder name: ");
+    printf("\n\t\tEnter your card holder name: ");
     scanf("%s", passenger.c_a.cardHolderName);
 
-    printf("Enter your card expiration date (MM/YY): ");
+    printf("\n\t\tEnter your card expiration date (MM/YY): ");
     scanf("%s", passenger.c_a.expirationDate);
 
-    printf("Enter your security code: ");
+    printf("\n\t\tEnter your security code: ");
     scanf("%s", passenger.c_a.securityCode);
+
+      printf("\n\t\t****************************\n");
+
 
     return passenger;
 }
@@ -112,7 +131,8 @@ void writePassengerToFile(PASSENGER_INFO passenger) {
     }
 
     // Print passenger information to file
-    if (fprintf(file, "Name: %s\n", passenger.name) < 0 ||
+    if (fprintf(file, "Food: %s\n", passenger.food) < 0 ||
+        fprintf(file, "Name: %s\n", passenger.name) < 0 ||
         fprintf(file, "Gender: %s\n", passenger.gender) < 0 ||
         fprintf(file, "Email ID: %s\n", passenger.email_id) < 0 ||
         fprintf(file, "Nationality: %s\n", passenger.nationality) < 0 ||
@@ -130,7 +150,7 @@ void writePassengerToFile(PASSENGER_INFO passenger) {
         perror("Error writing to file");
     } else {
         fprintf(file, "\n");  // Add a newline to separate entries
-        printf("Passenger information written to file successfully.\n");
+        printf("Flight booked! \n");
     }
 
     fclose(file);

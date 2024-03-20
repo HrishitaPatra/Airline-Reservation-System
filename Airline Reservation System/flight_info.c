@@ -32,8 +32,8 @@ typedef struct flight_node
 
 void initTree(TREE *pt);
 void createTree(TREE *pt);
-void inorder(NODE *r,char *src,char *dest); // Correct the function declaration
-void inorder_call(TREE *pt,char *u_src,char *u_dest);
+int inorder(NODE *r,char *src,char *dest); // Correct the function declaration
+int inorder_call(TREE *pt,char *u_src,char *u_dest);
 
 
 
@@ -173,26 +173,79 @@ void createTree(TREE *pt)
     }
 }
 
-void inorder(NODE *r,char *u_src,char *u_dest)
-{
-    if (r != NULL)
-    {
-        
-        
-        inorder(r->left,u_src,u_dest);
-        if(strcmp(r->src,u_src)==0 && strcmp(r->dest,u_dest)==0)
-        {
+int inorder(NODE *r, char *u_src, char *u_dest) {
+    int count = 0;
+    if (r != NULL) {
+        count += inorder(r->left, u_src, u_dest);
+        if (strcmp(r->src, u_src) == 0 && strcmp(r->dest, u_dest) == 0) {
             printf("Flight Name: %s, Source: %s, Destination: %s, Duration: %d, Fare: %d, Start Time: %d, End Time: %d\n",
-               r->fl_name, r->src, r->dest, r->duration, r->fare, r->st, r->et);
-               
+                   r->fl_name, r->src, r->dest, r->duration, r->fare, r->st, r->et);
+            count = 1;  // Set count to 1 when a match is found
         }
-        inorder(r->right,u_src,u_dest);
-        
-    }   
+        count += inorder(r->right, u_src, u_dest);
+    }
+    return count;
 }
 
-void inorder_call(TREE *pt,char *u_src,char *u_dest)
-{
-	inorder(pt->root,u_src,u_dest);
 
+int inorder_call(TREE *pt, char *u_src, char *u_dest) {
+    
+    
+    int res=inorder(pt->root, u_src, u_dest);
+     return res;
+}
+
+
+void markSeatInTree(NODE *root, const char *chosenSeat) {
+    if (root != NULL) {
+        markSeatInTree(root->left, chosenSeat);
+
+        // Check if the current node's seat matches the chosen seat
+        if (strcmp(root->seatList.head->st, chosenSeat) == 0) {
+            // Mark the chosen seat with 'X' in the binary tree
+            strcpy(root->seatList.head->st, "X");
+        }
+
+        markSeatInTree(root->right, chosenSeat);
+    }
+}
+
+
+void updateFlightDataFile(NODE *root) {
+    // Open the original file in read mode
+    FILE *file = fopen("flight_data.txt", "r+");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    // Read each line and update the seat information if the flight matches
+    char line[256];
+    while (fgets(line, sizeof(line), file) != NULL) {
+        // Tokenize the line to extract flight information
+        char *token = strtok(line, " ");
+        if (token != NULL) {
+            // Compare flight name with the root node's flight name
+            if (strcmp(token, root->fl_name) == 0) {
+                // Update the seat information
+                fseek(file, -strlen(line), SEEK_CUR); // Move back to the beginning of the line
+                Seat *current = root->seatList.head;
+                while (current != NULL) {
+                    // Find the seat in the line and update it to 'X'
+                    char *seatToken = strtok(NULL, " ");
+                    if (strcmp(seatToken, current->st) == 0) {
+                        // Update the seat to 'X'
+                        fprintf(file, "X "); // Update the seat to 'X'
+                    } else {
+                        fprintf(file, "%s ", seatToken); // Keep other seat information unchanged
+                    }
+                    current = current->next;
+                }
+                fseek(file, 0, SEEK_CUR); // Move back to the end of the line
+            }
+        }
+    }
+
+    // Close the file
+    fclose(file);
 }

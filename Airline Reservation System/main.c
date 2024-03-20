@@ -6,113 +6,36 @@
 #include<stdlib.h>
 #include <string.h>
 
-void writePassengerToFile(FLIGHT_NAME flight);
+//void writePassengerToFile(FLIGHT_NAME flight);
 
-void storeInOrder(NODE *root, NODE *arr, int *index) {
-    if (root != NULL) {
-        storeInOrder(root->left, arr, index);
-
-        // Copy the current node to the array
-        arr[*index] = *root;
-        (*index)++;
-
-        storeInOrder(root->right, arr, index);
-    }
-}
-
-void storeTreeInArray(TREE *tree, NODE *arr, int *size) {
-    int index = 0;
-    storeInOrder(tree->root, arr, &index);
-    *size = index;
-}
-
-void writeArrayToFile(NODE *arr, int size, const char *filename) {
-    FILE *file = fopen(filename, "wb");
-    if (file == NULL) {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
-    }
-
-    fwrite(arr, sizeof(NODE), size, file);
-
-    fclose(file);
-}
-
-NODE *readNodeFromFile(FILE *file) {
-    NODE *node = malloc(sizeof(NODE));
-    if (node == NULL) {
-        perror("Memory allocation error");
-        //exit(EXIT_FAILURE);
-    }
-
-    fread(node, sizeof(NODE), 1, file);
-
-    return node;
-}
+void updateFlightDataFile(NODE *root);
 
 
-void buildTreeFromArray(NODE **root, NODE *arr, int start, int end, FILE *file) {
-    if (start <= end) {
-        int mid = (start + end) / 2;
-        *root = readNodeFromFile(file);  // Pass the file pointer, not the node
+
+void handleSeatSelection(NODE *r) {
+    char chosenSeat[4];
+
+    printf("\nEnter the seat you want to choose (e.g., A1): ");
+    scanf("%s", chosenSeat);
+    PASSENGER_INFO passenger;
+    strcpy(passenger.seat_no,chosenSeat);
+
     
-        buildTreeFromArray(&(*root)->left, arr, start, mid - 1, file);
-        buildTreeFromArray(&(*root)->right, arr, mid + 1, end, file);
-    }
+
+    if(strcmp(chosenSeat, "exit") == 0) {
+        printf("You have chosen seat %s.\n", chosenSeat);
+        printf("Updated seat arrangement:\n");
+        printSeats(&r->seatList, 30, 30);
+    } 
 }
 
-void readArrayFromFile(NODE **root, const char *filename, int size) {
-    printf("entered fn readArrayFrom File\n");
-    FILE *file = fopen(filename, "rb");
-    if (file == NULL) {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
-    }
-
-    NODE *treeArray = malloc(sizeof(NODE) * size);
-    fread(treeArray, sizeof(NODE), size, file);
-    fclose(file);
-
-    buildTreeFromArray(root, treeArray, 0, size - 1, file);  // Use the same file pointer
-
-    free(treeArray);  // Don't forget to free the allocated memory
-    
-    printf("read from file\n");
-}
-
-
-void handleSeatSelection(NODE *r)
-{
-        char chosenSeat[4];
-
-        printf("\nEnter the seat you want to choose (e.g., A1): ");
-        scanf("%s", chosenSeat);
-
-       /* while (strcmp(chosenSeat, "exit") != 0) {
-        while (isSeatTaken(&r->seatList, chosenSeat)) {*/
-            printf("Seat %s is already taken. Choose another seat: ", chosenSeat);
-            scanf("%s", chosenSeat);
-        
-
-        markChosenSeat(&r->seatList, chosenSeat);
-
-        //printf("\nUpdated seat arrangement:\n");
-        //printSeats(&r->seatList);
-
-        //printf("\nEnter the seat you want to choose (e.g., A1), or type 'exit' to quit: ");
-        //scanf("%s", chosenSeat);
-
-        printf("your chosen seat: %s\n",chosenSeat);
-        
-
-}
 
 
 int searchNode(NODE *r, char *user_fl_name) {
     if (r != NULL) {
         if (strcmp(user_fl_name, r->fl_name) == 0) {
             printf("Initial seat arrangement:\n");
-            //printSeats(&r->seatList);
+            printSeats(&r->seatList,30,30);
             handleSeatSelection(r);
 
             return 1;
@@ -158,7 +81,7 @@ void insertNode(NODE **root, const char flight_no[], const char src[], const cha
         (*root)->fare = fare;
         (*root)->st = st;
         (*root)->et = et;
-        initSeatList(&(*root)->seatList); // Initialize the seatList
+         // Initialize the seatList
         createSeat(&(*root)->seatList);
 
         (*root)->left = NULL;
@@ -187,6 +110,7 @@ void parseAndInsertFromFile(const char *filename, TREE *root)
         exit(EXIT_FAILURE);
     }
 
+
     char line[256];
     while (fgets(line, sizeof(line), file) != NULL)
     {
@@ -203,86 +127,177 @@ void parseAndInsertFromFile(const char *filename, TREE *root)
     fclose(file);
 }
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Function to update the file content
+void updateFile(const char *filename, const char *search, const char *replace) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    // Read the existing content
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    rewind(file);
+
+    char *content = (char *)malloc(file_size + 1);
+    if (content == NULL) {
+        perror("Memory allocation error");
+        exit(EXIT_FAILURE);
+    }
+
+    fread(content, 1, file_size, file);
+    content[file_size] = '\0'; // Null-terminate the content
+
+    fclose(file);
+
+    // Search for the string to replace
+    char *position = strstr(content, search);
+    if (position != NULL) {
+        // Replace the string
+        strncpy(position, replace, strlen(replace));
+    } else {
+        printf("String not found in the file.\n");
+        free(content);
+        return;
+    }
+
+    // Write the updated content back to the file
+    file = fopen(filename, "w");
+    if (file == NULL) {
+        perror("Error opening file for writing");
+        free(content);
+        exit(EXIT_FAILURE);
+    }
+
+    fwrite(content, 1, file_size, file);
+
+    fclose(file);
+    free(content);
+}
 
 
-int main()
-{
+void printTicketHeader() {
+    printf("\n\t\t******************************\n");
+    printf("\t\t*         TICKET             *\n");
+    printf("\t\t******************************\n");
+}
+
+void printTicketFooter() {
+    printf("\t\t******************************\n\n");
+}
+
+void printTicketInfo(const char *label, const char *value) {
+    printf("\t\t* %-15s: %-9s *\n", label, value);
+}
+
+
+
+int main() {
+    char u_src[50];
+    char u_dest[50];
     int choice;
-    printf("Do you want to eneter a file?\n");
-    scanf("%d",&choice);
 
-    while (choice)
-    {
-        NODE *temp = malloc(sizeof(NODE));
+    printf("\n\t\t****************************\n");
+    printf("\n\t\tAdmin please enter 1\n");
+    printf("\n\t\tCustomer please enter 0\n");
+    scanf("%d", &choice);
+    printf("\n\t\t****************************\n");
+
+    while (choice == 1) {
+         NODE *temp = malloc(sizeof(NODE));
         temp->left = temp->right = NULL;
-        printf("enter the flight name\n");
+        printf("\n\t\tenter the flight name\n");
         scanf("%s", temp->fl_name);
         // For 'src' and 'dest', allocate memory and use strcpy
         temp->src = malloc(50);
         temp->dest = malloc(50);
-        printf("enter the source\n");
+        printf("\n\t\tenter the source\n");
         scanf("%s", temp->src);
-        printf("enter the destination\n");
+        printf("\n\t\tenter the destination\n");
         scanf("%s", temp->dest);
-        printf("enter the duration\n");
+        printf("\n\t\tenter the duration\n");
         scanf("%d", &temp->duration);
-        printf("enter the flight fare\n");
+        printf("\n\t\tenter the flight fare\n");
         scanf("%d", &temp->fare);
         // For 'st' and 'et', use char arrays and scanf strings
-        printf("enter the start time\n");
+        printf("\n\t\tenter the start time\n");
         scanf("%d", &temp->st);
-        printf("enter the end time\n");
+        printf("\n\t\tenter the end time\n");
         scanf("%d", &temp->et);
+        printf("\n\t\t****************************\n");
         //NODE *treeArray = malloc(sizeof(NODE) * 100); //linked list 
         temp->seatList.head = NULL;
         createSeat(&temp->seatList);
         storeFlightNode(temp, "flight_data.txt");
-        printf("Do you want to eneter a file?\n");
+        printf("\n\t\tDo you want to enter another flight?\n");
         scanf("%d",&choice);
+
     }
 
-    
-    TREE tobj;
+    printf("\n\t\tFor booking flight enter 1\n");
+    printf("\n\t\t Press any key to exit\n");
+    int n;
+    scanf("%d", &n);
 
-    initTree(&tobj);
+    if (n == 1) {
+        TREE tobj;
+        initTree(&tobj);
+        parseAndInsertFromFile("flight_data.txt", &tobj);
 
-    //createTree(&tobj);
-    parseAndInsertFromFile("flight_data.txt", &tobj);
-    int size;
-    NODE *treeArray = malloc(sizeof(NODE) * 100); // Adjust the size accordingly
-    //storeTreeInArray(&tobj, treeArray, &size);
-    //writeArrayToFile(treeArray, size, "tree_data.dat");
-    
-    printf("Sorted by fares\n");
-    TREE tobj2;
-    int size2;
-    NODE *treeArray2;
-    readArrayFromFile(&tobj2.root, "tree_data.dat", size2);
-    printTreeElements(tobj2.root);
-     // Pass the root of the tree to inorder
-    printf("Enter source\n");
-    char u_src[50]; // Declare character arrays for source and destination
-    char u_dest[50];
-    scanf("%s",u_src);
-    printf("Enter destination\n");
-    scanf("%s",u_dest);
-    printf("Here are your available flights:\n");
-    inorder_call(&tobj,u_src,u_dest);
-    printf("Please type in the flight you want to go in!\n");
-    char user_fl_name[50];
-    scanf("%s",user_fl_name);
+        int opt = 1;
 
-    searchRecursive(&tobj, user_fl_name);
-    printf("done!\n");
-    FLIGHT_NAME flight;
-    PASSENGER_INFO passenger = book_flight();
-    strcpy(flight.fl_name, user_fl_name);
-    flight.passenger_list = insertPassenger(flight.passenger_list, passenger);
+        do {
+            printf("\n\t\t****************************\n");
+            printf("\n\t\tEnter source\n");
+            scanf("%s", u_src);
+            printf("\n\t\tEnter destination\n");
+            scanf("%s", u_dest);
+            printf("\n\n\t\tHere are your available flights:\n");
 
-    // Write passenger information to file
-    writePassengerToFile(flight);
+            int res = inorder_call(&tobj, u_src, u_dest);
 
+            if (res == 0) {
+                printf("Sorry! No available flights for your route\n");
+                printf("Do you want to enter another flight? (0/1): ");
+                scanf("%d", &opt);
+            } else {
+                printf("\n\t\tPlease type in the flight you want to go in!\n");
+                char user_fl_name[50];
+                scanf("%s", user_fl_name);
 
-    
+                res = searchRecursive(&tobj, user_fl_name);
+
+                if (res == 0) {
+                    printf("\n\t\tFlight not found. Please try again.\n");
+                    opt = 1; // Allow the user to enter another flight
+                } else {
+                    FLIGHT_NAME flight;
+                    PASSENGER_INFO passenger = book_flight();
+                    strcpy(flight.fl_name, user_fl_name);
+                    flight.passenger_list = insertPassenger(flight.passenger_list, passenger);
+
+                    // Write passenger information to file
+                    writePassengerToFile(flight);
+                    //printf("Seat chosen: %s\n", passenger.seat_no);
+
+                    printTicketHeader();    
+                    printTicketInfo("NAME", passenger.name);
+                    //printTicketInfo("SEAT", passenger.seat_no);
+                    printTicketInfo("FLIGHT", user_fl_name);
+                    printTicketInfo("SOURCE", u_src);
+                    printTicketInfo("DESTINATION", u_dest);
+                    printTicketFooter();
+
+                    opt = 0; // Exit the loop after successful booking
+                }
+            }
+        } while (opt == 1);
+    }
+
     return 0;
 }

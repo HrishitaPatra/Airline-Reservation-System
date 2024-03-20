@@ -3,25 +3,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "flight_info.h"
 
 #define MAX 60
 
-typedef struct Seat {
-    char st[4];
-    int no;
-    struct Seat *next;
-} Seat;
 
-typedef struct List {
-    Seat *head;
-} List;
 
 //linked list of seat numbers
 
-void createSeat(List *pl);
-int isSeatTaken(List *pl, const char *chosenSeat);
-void markChosenSeat(List *pl, const char *chosenSeat);
-void printSeats(List *pl);
+
+void printSeats(List *pl,int seatsPerRow, int m);
 
 void createSeat(List *pl) {
     
@@ -58,35 +49,27 @@ int isSeatTaken(List *pl, const char *chosenSeat) {
     return 1; // Invalid seat
 }
 
-void markChosenSeat(List *pl, const char *chosenSeat) {
-    Seat *current = pl->head;
-    while (current != NULL) {
-        if (strcmp(current->st, chosenSeat) == 0) {
-            // Mark the chosen seat with 'X'
-            strcpy(current->st, "X");
-            break;
-        }
-        current = current->next;
-    }
-}
 
 
-
-
-
-void printSeats(List *pl) {
-    Seat *current = pl->head;
+void printSeats(List* pl, int seatsPerRow, int m) {
+    Seat* current = pl->head;
 
     while (current != NULL) {
         printf("%s ", current->st);
-        
-        // Add a new line after every 10 seats for better readability
-        if (current->no % 10 == 0) {
+
+        // Move to the next row
+        if (current->no % seatsPerRow == 0) {
             printf("\n");
+
+            // Insert an extra line break after every m seats
+            if (current->no % m == 0) {
+                // Insert an extra empty line between C and D
+                if (current->st[0] == 'D') {
+                    printf("\n");
+                }
+            }
         }
 
         current = current->next;
-        
     }
-    printf("reached the end!\n");
 }

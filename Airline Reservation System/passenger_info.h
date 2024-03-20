@@ -25,6 +25,7 @@ typedef struct passenger_info {
     char nationality[50];
     int ph_no;
     int emergency_cont;
+    char food[50];
     PASSENG_ADDR p_a;
     CREDIT_CARD c_a;
 } PASSENGER_INFO;
